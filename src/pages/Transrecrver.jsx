@@ -76,6 +76,7 @@ export default function Transrecrver() {
           setIsLoading(true)
           setIsModalOpen(false)
           clearEditor();
+          setEditData();
       })
       .catch((error) => {
         setIsLoading(true)
