@@ -55,22 +55,17 @@ export default function Transrecrver() {
   
 
   const handleDataOnsubmit = async (data) => {
-    console.log(data)
     setIsLoading(false)
 
     const baseUrl = 'http://localhost:5000/api/v1/transciver'
     const url = editData ? `${baseUrl}/updateData/${editData.data.unique_id}` : `${baseUrl}/addData`;
 
-    const requestData = {
-      ...data,
-      created_by: "John Doe",
-      updated_by: "Jane Doe",
-      status: data.status?.value,
-      modem_firmware: data.modem_firmware.map(item => item.value),
-      modem_type: data.modem_type.map(item => item.value),
-    };
+    data['created_by'] = "John Doe"
+    data['updated_by'] = "Jane Doe"
+    data['status'] = data?.status?.value;
+    // data['modem_firmware'] = data['modem_firmware'].map(item => item.value);
 
-    await axios.post(url, requestData)
+    await axios.post(url, data)
       .then((res) => {
           fetchData();
           setIsLoading(true)
@@ -81,22 +76,17 @@ export default function Transrecrver() {
         setIsLoading(true)
         console.error('Error:', error.message);
       })
-
-
   };
 
   const handleFilter = async (data) => {
-    setIsLoading(false)
     await axios.post('http://localhost:5000/api/v1/transciver/filter', data)
       .then((response) => {
         setDataList(response.data.data);
         setIsFilterModalOpen(false)
         setFilterData(data)
-        setIsLoading(true)
       })
       .catch((error) => {
         console.error('Error:', error.message);
-        setIsLoading(true)
       })
   }
 
@@ -108,7 +98,6 @@ export default function Transrecrver() {
   const handleCancel = () => {
     setIsModalOpen(false);
     setEditData(null);
-    clearEditor();
   };
 
   // =============== filter ==========
@@ -231,16 +220,13 @@ function AddList({isLoading, editData, isModalOpen, handleCancel, handleDataOnsu
       })
       reset();
     }
-  }, [isModalOpen]);
+  }, [isModalOpen, reset]);
 
   useEffect(() => {
     if (isModalOpen && editData) {
-
-      console.log(editData?.modem_type.map(data => ({label: data?.MODEM_PROFILE_NAME, value: data})))
-
       setValue("cmd_title", editData?.cmd_title)
-      setValue("modem_type", editData?.modem_type.map(data => ({label: data?.MODEM_PROFILE_NAME, value: data})))
-      setValue("modem_firmware", editData?.modem_firmware.map(data => ({label: data?.MODEM_FIRMWARE_NAME, value: data})))
+      setValue("modem_type", editData?.modem_type)
+      setValue("modem_firmware", editData?.modem_firmware)
       setValue("status", { label: editData?.status, value: editData?.status })
       if (isEditorReady) {
         callOnReady();
@@ -444,7 +430,7 @@ function FilterModal({isLoading, isFilterModalOpen, handleFilterModal, handleFil
       maskClosable={false}
       footer={[
         <div className='tw-flex tw-gap-x-3 tw-items-center'>
-          <button type='button' className='btn btn-danger' disabled={!isLoading} onClick={handleSubmit(submitHandler)}>{isLoading ? 'Filter' : <CgSpinnerTwoAlt className="tw-size-5 tw-animate-spin" />}</button>
+          <button type='button' className='btn btn-danger' disabled={isLoading} onClick={handleSubmit(submitHandler)}>{isLoading ? 'Filter' : <CgSpinnerTwoAlt className="tw-size-5 tw-animate-spin" />}</button>
           <button type='button' className="btn btn-light text-dark" onClick={handleFilterModals}>Cancel</button>
         </div>
       ]}
@@ -463,7 +449,7 @@ function FilterModal({isLoading, isFilterModalOpen, handleFilterModal, handleFil
                       {...field}
                       options={modems.map((modem) => ({
                         label: modem.MODEM_PROFILE_NAME,
-                        value: modem.MODEM_UNIQUE_ID
+                        value: modem.MODEM_PROFILE_NAME
                       }))}
                       getOptionLabel={(option) => option.label}
                       getOptionValue={(option) => option.label}
@@ -486,7 +472,7 @@ function FilterModal({isLoading, isFilterModalOpen, handleFilterModal, handleFil
                       {...field}
                       options={firmware.map((fw) => ({
                         label: fw.MODEM_FIRMWARE_NAME,
-                        value: fw.MODEM_FIRMWARE_UNIQUE_ID,
+                        value: fw.MODEM_FIRMWARE_NAME,
                       }))}
                       getOptionLabel={(option) => option.label}
                       getOptionValue={(option) => option.label}
@@ -526,6 +512,7 @@ function FilterModal({isLoading, isFilterModalOpen, handleFilterModal, handleFil
 }
 
 function FilterBar({ data }) {
+  console.log(Object.entries(data))
   return (
     <>
       {
@@ -537,7 +524,7 @@ function FilterBar({ data }) {
                 <span className='tw-font-bold tw-mr-2 tw-capitalize ' >{key.split('_').join(" ")} :</span>
                 {
                   values.map((value) => (
-                    <span className='tw-text-xs border tw-py-1 tw-px-2 tw-inline-block !tw-border-indigo-600 tw-rounded tw-mx-1' >{value?.label}</span>
+                    <span className='tw-text-xs border tw-py-1 tw-px-2 tw-inline-block !tw-border-indigo-600 tw-rounded tw-mx-1' >{value?.value}</span>
                   ))
                 }
               </div>
@@ -602,7 +589,7 @@ function DataBody({ title, content }) {
             {
               content && content.map((info) => {
                 return (
-                  <span key={info?.MODEM_FIRMWARE_NAME || info?.MODEM_PROFILE_NAME} className='tw-bg-gray-200 tw-rounded-sm tw-px-2 tw-py-1' >{info?.MODEM_FIRMWARE_NAME || info?.MODEM_PROFILE_NAME}</span>
+                  <span key={info?.value} className='tw-bg-gray-200 tw-rounded-sm tw-px-2 tw-py-1' >{info?.value}</span>
                 )
               }
               )
